@@ -31,13 +31,20 @@ def emotionDetector():  # pylint: disable=invalid-name
     'fear': <fear>, 'joy': <joy> and 'sadness': <sadness>. The dominant emotion is
     <dominant_emotion>.
 
-    If the input is invalid (empty text), an error message is returned.
+    If 'dominant_emotion' is None, we respond with "Invalid text! Please try again!"
+    while still returning a 200 status.
     """
     text = request.args.get("textToAnalyze")
     if not text or not text.strip():
-        return jsonify({"error": "Invalid input. Please provide some text."}), 400
+        # Return 200 but include the error message in the response
+        return jsonify({"response": "Invalid text! Please try again!"})
 
     result = emotion_detector(text)
+
+    # If the Watson NLP service returned a 400, the function sets everything to None.
+    if result["dominant_emotion"] is None:
+        # Again, respond with 200 but an error message in the JSON
+        return jsonify({"response": "Invalid text! Please try again!"})
 
     # Construct the response string in the requested format.
     response_str = (

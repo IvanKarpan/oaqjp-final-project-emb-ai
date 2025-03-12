@@ -1,7 +1,8 @@
 """
 This module provides the emotion_detector function which uses the Watson NLP
 EmotionPredict API to analyze text and return emotion scores along with the
-dominant emotion.
+dominant emotion. It incorporates error handling for blank entries by checking
+the server response status code.
 """
 
 import json
@@ -29,13 +30,17 @@ def emotion_detector(text_to_analyse):
         }],
         ... other keys ...
     }
+    
+    If the endpoint returns a 400 status code (likely due to blank text),
+    this function returns a dictionary with all values set to None.
 
     Args:
         text_to_analyse (str): The text to analyze for emotion.
 
     Returns:
         dict: A dictionary containing the emotion scores for 'anger', 'disgust', 'fear',
-              'joy', 'sadness' and the 'dominant_emotion' which is the emotion with the highest score.
+              'joy', 'sadness' and 'dominant_emotion'. If status_code = 400, all values
+              (including dominant_emotion) are None.
     """
     url = (
         "https://sn-watson-emotion.labs.skills.network"
@@ -48,6 +53,18 @@ def emotion_detector(text_to_analyse):
     payload = {"raw_document": {"text": text_to_analyse}}
 
     response = requests.post(url, headers=headers, json=payload, timeout=10)
+
+    # If the service returns 400, return a dictionary with all values set to None.
+    if response.status_code == 400:
+        return {
+            "anger": None,
+            "disgust": None,
+            "fear": None,
+            "joy": None,
+            "sadness": None,
+            "dominant_emotion": None,
+        }
+
     response_json = json.loads(response.text)
 
     # Extract the nested emotion scores from the first prediction in 'emotionPredictions'
